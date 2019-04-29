@@ -1,12 +1,21 @@
 import numpy as np
 import math
 
-from numba import jit
+from numba import jit, float64, int64
+
+
+@jit(float64(float64), nopython=True)
+def tricubic(x):
+    if x <= -1.0 or x >= 1.0:
+        return 0.0
+    else:
+        return math.pow(1.0 - math.pow(abs(x), 3), 3)
 
 
 class Loess(object):
 
     @staticmethod
+    @jit(float64[:](float64[:]), nopython=True)
     def normalize_array(array):
         min_val = np.min(array)
         max_val = np.max(array)
@@ -21,18 +30,12 @@ class Loess(object):
         self.min_yy = np.min(yy)
 
     @staticmethod
-    def tricubic(x):
-        if x <= -1.0 or x >= 1.0:
-            return 0.0
-        else:
-            return math.pow(1.0 - math.pow(abs(x), 3), 3)
-
-    @staticmethod
+    @jit(float64(float64[:], int64[:]), nopython=True)
     def get_max_distance(distances, rng):
         return np.max(distances[rng[0]:rng[1] + 1])
 
     @staticmethod
-    @jit
+    @jit(int64[:](float64[:], int64), nopython=True)
     def get_min_range(distances, window):
         i_min = np.argmin(distances)
         n = distances.shape[0]
@@ -45,17 +48,17 @@ class Loess(object):
                 i1 = i1 + 1
             else:
                 break
-        return i0, i1
+        return np.array([i0, i1])
 
-    @jit
-    def get_weights(self, distances, min_range):
+    @staticmethod
+    @jit(float64[:](float64[:], int64[:]), nopython=True)
+    def get_weights(distances, min_range):
         n = min_range[1] - min_range[0] + 1
-        max_distance = self.get_max_distance(distances, min_range)
+        max_distance = np.max(distances[min_range[0]:min_range[1] + 1])
         weights = np.zeros(n)
 
         for i in range(n):
-            weights[i] = self.tricubic(distances[min_range[0] + i] /
-                                       max_distance)
+            weights[i] = tricubic(distances[min_range[0] + i] / max_distance)
         return weights
 
     def normalize_x(self, value):
