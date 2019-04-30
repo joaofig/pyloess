@@ -9,7 +9,23 @@ def tricubic(x):
     if x <= -1.0 or x >= 1.0:
         return 0.0
     else:
-        return math.pow(1.0 - math.pow(abs(x), 3), 3)
+        return 70.0 * math.pow(1.0 - math.pow(abs(x), 3), 3) / 81.0
+
+
+@jit(float64(float64), nopython=True)
+def epanechnikov(x):
+    if x <= -1.0 or x >= 1.0:
+        return 0.0
+    else:
+        return 3.0 * (1.0 - x * x) / 4.0
+
+
+@jit(float64(float64), nopython=True)
+def cosine(x):
+    if x <= -1.0 or x >= 1.0:
+        return 0.0
+    else:
+        return math.pi / 4.0 * math.cos(math.pi * x / 2.0)
 
 
 class Loess(object):
