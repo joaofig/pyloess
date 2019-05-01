@@ -9,7 +9,7 @@ def tricubic(x):
     if x <= -1.0 or x >= 1.0:
         return 0.0
     else:
-        return math.pow(1.0 - math.pow(abs(x), 3), 3)
+        return 70.0 * math.pow(1.0 - math.pow(abs(x), 3), 3) / 81.0
 
 
 class Loess(object):
@@ -41,13 +41,17 @@ class Loess(object):
         n = distances.shape[0]
         i0 = max(i_min - 1, 0)
         i1 = min(i_min + 1, n - 1)
-        for i in range(window):
-            if distances[i0] < distances[i1] and i0 > 0:
-                i0 = i0 - 1
-            elif distances[i0] > distances[i1] and i1 < n - 1:
-                i1 = i1 + 1
+        while i1 - i0 + 1 < window:
+            if distances[i0] < distances[i1]:
+                if i0 > 0:
+                    i0 -= 1
+                else:
+                    i1 += 1
             else:
-                break
+                if i1 < n - 1:
+                    i1 += 1
+                else:
+                    i1 -= 1
         return np.array([i0, i1])
 
     @staticmethod
@@ -100,14 +104,16 @@ class Loess(object):
 
 
 def main():
-    xx = np.array([1544326239000.0, 1544326247000.0, 1544326257766.0,
-                   1544326261000.0, 1544326275000.0, 1544326283000.0,
-                   1544326281000.0])
-    yy = np.array([1600.0, 1750.0, 1700.0, 1600.0, 1800.0, 1550.0, 1650.0])
+    xx = np.array([0.5578196, 2.0217271, 2.5773252, 3.4140288, 4.3014084, 4.7448394, 5.1073781,
+                   6.5411662, 6.7216176, 7.2600583, 8.1335874, 9.1224379, 11.9296663, 12.3797674,
+                   13.2728619, 14.2767453, 15.3731026, 15.6476637, 18.5605355, 18.5866354, 18.7572812])
+    yy = np.array([18.63654, 103.49646, 150.35391, 190.51031, 208.70115, 213.71135, 228.49353,
+                   233.55387, 234.55054, 223.89225, 227.68339, 223.91982, 168.01999, 164.95750,
+                   152.61107, 160.78742, 168.55567, 152.42658, 221.70702, 222.69040, 243.18828])
 
     loess = Loess(xx, yy)
 
-    y = loess.estimate(1544326247000.0, window=5)
+    y = loess.estimate(1.0, window=5)
     print(y)
 
 
