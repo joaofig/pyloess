@@ -37,28 +37,31 @@ class Loess(object):
     @staticmethod
     @jit(int64[:](float64[:], int64), nopython=True)
     def get_min_range(distances, window):
-        i_min = np.argmin(distances)
-        n = distances.shape[0]
-        i0 = max(i_min - 1, 0)
-        i1 = min(i_min + 1, n - 1)
-        while i1 - i0 + 1 < window:
-            if distances[i0] < distances[i1]:
-                if i0 > 0:
-                    i0 -= 1
-                else:
-                    i1 += 1
-            else:
-                if i1 < n - 1:
-                    i1 += 1
-                else:
-                    i1 -= 1
-        return np.array([i0, i1])
+        min_idx = np.argsort(distances)[:window]
+        return np.sort(min_idx)
+
+        # i_min = np.argmin(distances)
+        # n = distances.shape[0]
+        # i0 = max(i_min - 1, 0)
+        # i1 = min(i_min + 1, n - 1)
+        # while i1 - i0 + 1 < window:
+        #     if distances[i0] < distances[i1]:
+        #         if i0 > 0:
+        #             i0 -= 1
+        #         else:
+        #             i1 += 1
+        #     else:
+        #         if i1 < n - 1:
+        #             i1 += 1
+        #         else:
+        #             i1 -= 1
+        # return np.array([i0, i1])
 
     @staticmethod
-    @jit(float64[:](float64[:], int64[:]), nopython=True)
+    # @jit(float64[:](float64[:], int64[:]), nopython=True)
     def get_weights(distances, min_range):
-        n = min_range[1] - min_range[0] + 1
-        max_distance = np.max(distances[min_range[0]:min_range[1] + 1])
+        n = min_range.shape[0]
+        max_distance = np.max(distances[min_range])
         weights = np.zeros(n)
 
         for i in range(n):
@@ -71,7 +74,7 @@ class Loess(object):
     def denormalize_y(self, value):
         return value * (self.max_yy - self.min_yy) + self.min_yy
 
-    @jit
+    # @jit
     def estimate(self, x, window):
         n_x = self.normalize_x(x)
         distances = np.abs(self.n_xx - n_x)
@@ -84,7 +87,7 @@ class Loess(object):
         sum_weight_x2 = 0.0
         sum_weight_xy = 0.0
 
-        for i in range(min_range[0], min_range[1] + 1):
+        for i in min_range:
             w = weights[i - min_range[0]]
             sum_weight += w
             sum_weight_x += self.n_xx[i] * w
