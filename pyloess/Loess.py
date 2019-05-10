@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import time
 
 from numba import jit, float64, int64, vectorize
 
@@ -9,13 +10,12 @@ def tricubic(x):
     if x <= -1.0 or x >= 1.0:
         return 0.0
     else:
-        return 70.0 * math.pow(1.0 - math.pow(abs(x), 3), 3) / 81.0
+        return math.pow(1.0 - math.pow(abs(x), 3), 3)
 
 
 class Loess(object):
 
     @staticmethod
-    @jit(float64[:](float64[:]), nopython=True)
     def normalize_array(array):
         min_val = np.min(array)
         max_val = np.max(array)
@@ -32,11 +32,29 @@ class Loess(object):
     @staticmethod
     @jit(int64[:](float64[:], int64), nopython=True)
     def get_min_range(distances, window):
-        min_idx = np.argsort(distances)[:window]
-        return np.sort(min_idx)
+        min_idx = np.argmin(distances)
+        n = len(distances)
+        if min_idx == 0:
+            return np.arange(0, window)
+        if min_idx == n-1:
+            return np.arange(n - window, n)
+
+        min_range = [min_idx]
+        while len(min_range) < window:
+            i0 = min_range[0]
+            i1 = min_range[-1]
+            if i0 == 0:
+                min_range.append(i1 + 1)
+            elif i1 == n-1:
+                min_range.append(i0 - 1)
+            elif distances[i0-1] < distances[i1+1]:
+                min_range.append(i0 - 1)
+            else:
+                min_range.append(i1 + 1)
+            min_range.sort()
+        return np.sort(np.array(min_range))
 
     @staticmethod
-    # @jit(float64[:](float64[:], int64[:]), nopython=True)
     def get_weights(distances, min_range):
         max_distance = np.max(distances[min_range])
         weights = tricubic(distances[min_range] / max_distance)
@@ -48,7 +66,6 @@ class Loess(object):
     def denormalize_y(self, value):
         return value * (self.max_yy - self.min_yy) + self.min_yy
 
-    # @jit
     def estimate(self, x, window):
         n_x = self.normalize_x(x)
         distances = np.abs(self.n_xx - n_x)
@@ -56,12 +73,12 @@ class Loess(object):
         weights = self.get_weights(distances, min_range)
 
         sum_weight = np.sum(weights)
-        sum_weight_x = np.sum(np.multiply(self.n_xx, weights))
-        sum_weight_y = np.sum(np.multiply(self.n_yy, weights))
+        sum_weight_x = np.sum(np.multiply(self.n_xx[min_range], weights))
+        sum_weight_y = np.sum(np.multiply(self.n_yy[min_range], weights))
         sum_weight_x2 = np.sum(np.multiply(
-            np.multiply(self.n_xx, self.n_xx), weights))
+            np.multiply(self.n_xx[min_range], self.n_xx[min_range]), weights))
         sum_weight_xy = np.sum(np.multiply(
-            np.multiply(self.n_xx, self.n_yy), weights))
+            np.multiply(self.n_xx[min_range], self.n_yy[min_range]), weights))
 
         mean_x = sum_weight_x / sum_weight
         mean_y = sum_weight_y / sum_weight
@@ -88,9 +105,15 @@ def main():
 
     loess = Loess(xx, yy)
 
-    y = loess.estimate(1.0, window=5)
-    print(y)
+    for x in xx:
+        y = loess.estimate(x, window=7)
+        print(x, y)
 
 
 if __name__ == "__main__":
+    start = time.time()
+
     main()
+
+    end = time. time()
+    print(end - start)
