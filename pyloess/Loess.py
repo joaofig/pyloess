@@ -72,6 +72,14 @@ class Loess(object):
         min_range = self.get_min_range(distances, window)
         weights = self.get_weights(distances, min_range)
 
+        # big_w = np.multiply(np.eye(window), weights)
+        # big_x = np.ones((window, 2))
+        # big_x[:, 1] = self.n_xx[min_range]
+        # big_y =
+        # big_xt = np.transpose(big_x)
+        # xtwx = np.linalg.pinv(np.dot(np.dot(big_xt, big_w), big_x))
+        # big_w = np.dot(np.dot(np.dot(xtwx, big_xt), big_w), big_y)
+
         sum_weight = np.sum(weights)
         sum_weight_x = np.sum(np.multiply(self.n_xx[min_range], weights))
         sum_weight_y = np.sum(np.multiply(self.n_yy[min_range], weights))
