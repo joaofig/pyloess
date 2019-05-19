@@ -37,13 +37,12 @@ class Loess(object):
             if i0 == 0:
                 min_range.append(i1 + 1)
             elif i1 == n-1:
-                min_range.append(i0 - 1)
+                min_range.insert(0, i0 - 1)
             elif distances[i0-1] < distances[i1+1]:
-                min_range.append(i0 - 1)
+                min_range.insert(0, i0 - 1)
             else:
                 min_range.append(i1 + 1)
-            min_range.sort()
-        return np.sort(np.array(min_range))
+        return np.array(min_range)
 
     @staticmethod
     def get_weights(distances, min_range):
@@ -105,8 +104,8 @@ def main():
     loess = Loess(xx, yy)
 
     for x in xx:
-        y = loess.estimate(x, window=15)
-        # print(x, y)
+        y = loess.estimate(x, window=7)
+        print(x, y)
 
 
 if __name__ == "__main__":
