@@ -73,13 +73,13 @@ class Loess(object):
             beta = np.linalg.pinv(xmt_wm @ xm) @ xmt_wm @ ym
             y = (beta @ xp)[0]
         else:
+            xx = self.n_xx[min_range]
+            yy = self.n_yy[min_range]
             sum_weight = np.sum(weights)
-            sum_weight_x = np.dot(self.n_xx[min_range], weights)
-            sum_weight_y = np.dot(self.n_yy[min_range], weights)
-            sum_weight_x2 = np.dot(
-                np.multiply(self.n_xx[min_range], self.n_xx[min_range]), weights)
-            sum_weight_xy = np.dot(
-                np.multiply(self.n_xx[min_range], self.n_yy[min_range]), weights)
+            sum_weight_x = np.dot(xx, weights)
+            sum_weight_y = np.dot(yy, weights)
+            sum_weight_x2 = np.dot(np.multiply(xx, xx), weights)
+            sum_weight_xy = np.dot(np.multiply(xx, yy), weights)
 
             mean_x = sum_weight_x / sum_weight
             mean_y = sum_weight_y / sum_weight

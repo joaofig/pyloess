@@ -27,10 +27,10 @@ class Loess(object):
             self.n_yy = self.normalize_tensor(yy)
         else:
             self.n_yy = self.normalize_tensor(torch.tensor(yy))
-        self.max_xx = torch.max(xx)
-        self.min_xx = torch.min(xx)
-        self.max_yy = torch.max(yy)
-        self.min_yy = torch.min(yy)
+        self.max_xx = torch.max(xx).item()
+        self.min_xx = torch.min(xx).item()
+        self.max_yy = torch.max(yy).item()
+        self.min_yy = torch.min(yy).item()
 
     @staticmethod
     def get_min_range(distances, window):
@@ -68,38 +68,40 @@ class Loess(object):
     def denormalize_y(self, value):
         return value * (self.max_yy - self.min_yy) + self.min_yy
 
-    def estimate(self, x, window):
+    def estimate(self, x, window, use_matrix=False):
         n_x = self.normalize_x(x)
         distances = torch.abs(self.n_xx - n_x)
         min_range = self.get_min_range(distances, window)
         weights = self.get_weights(distances, min_range)
 
-        # big_w = np.multiply(np.eye(window), weights)
-        # big_x = np.ones((window, 2))
-        # big_x[:, 1] = self.n_xx[min_range]
-        # big_y =
-        # big_xt = np.transpose(big_x)
-        # xtwx = np.linalg.pinv(np.dot(np.dot(big_xt, big_w), big_x))
-        # big_w = np.dot(np.dot(np.dot(xtwx, big_xt), big_w), big_y)
+        if use_matrix:
+            wm = torch.eye(window).mul(weights)
+            xm = torch.ones((window, 2))
+            xp = torch.tensor([[1.0], [n_x]])
+            xm[:, 1] = self.n_xx[min_range]
+            ym = self.n_yy[min_range]
+            xmt_wm = torch.transpose(xm, 0, 1) @ wm
+            beta = torch.pinverse(xmt_wm @ xm) @ xmt_wm @ ym
+            y = (beta @ xp)[0]
+        else:
+            xx = self.n_xx[min_range]
+            yy = self.n_yy[min_range]
+            sum_weight = torch.sum(weights).item()
+            sum_weight_x = torch.dot(xx, weights).item()
+            sum_weight_y = torch.dot(yy, weights).item()
+            sum_weight_x2 = torch.sum(torch.mul(torch.mul(xx, xx), weights))\
+                .item()
+            sum_weight_xy = torch.sum(torch.mul(torch.mul(xx, yy), weights))\
+                .item()
 
-        sum_weight = torch.sum(weights)
-        sum_weight_x = torch.dot(self.n_xx[min_range], weights)
-        sum_weight_y = torch.dot(self.n_yy[min_range], weights)
-        sum_weight_x2 = torch.sum(torch.mul(
-            torch.mul(self.n_xx[min_range], self.n_xx[min_range]),
-            weights))
-        sum_weight_xy = torch.sum(torch.mul(
-            torch.mul(self.n_xx[min_range], self.n_yy[min_range]),
-            weights))
+            mean_x = sum_weight_x / sum_weight
+            mean_y = sum_weight_y / sum_weight
 
-        mean_x = sum_weight_x / sum_weight
-        mean_y = sum_weight_y / sum_weight
+            b = (sum_weight_xy - mean_x * mean_y * sum_weight) / \
+                (sum_weight_x2 - mean_x * mean_x * sum_weight)
+            a = mean_y - b * mean_x
 
-        b = (sum_weight_xy - mean_x * mean_y * sum_weight) / \
-            (sum_weight_x2 - mean_x * mean_x * sum_weight)
-        a = mean_y - b * mean_x
-
-        y = a + b * n_x
+            y = a + b * n_x
         return self.denormalize_y(y)
 
 
@@ -118,8 +120,9 @@ def main():
     loess = Loess(xx, yy)
 
     for x in xx:
-        y = loess.estimate(x, window=7)
-        print(x, y)
+        xi = x.item()
+        y = loess.estimate(xi, window=7, use_matrix=False)
+        print(xi, y)
 
 
 if __name__ == "__main__":
