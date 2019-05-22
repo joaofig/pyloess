@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import math
 
 
 def tricubic(x):
@@ -57,13 +58,13 @@ class Loess(object):
     def denormalize_y(self, value):
         return value * (self.max_yy - self.min_yy) + self.min_yy
 
-    def estimate(self, x, window, use_matrix=False):
+    def estimate(self, x, window, use_matrix=False, degree=1):
         n_x = self.normalize_x(x)
         distances = np.abs(self.n_xx - n_x)
         min_range = self.get_min_range(distances, window)
         weights = self.get_weights(distances, min_range)
 
-        if use_matrix:
+        if use_matrix or degree > 1:
             wm = np.multiply(np.eye(window), weights)
             xm = np.ones((window, 2))
             xp = np.array([[1.0], [n_x]])
@@ -106,7 +107,7 @@ def main():
     loess = Loess(xx, yy)
 
     for x in xx:
-        y = loess.estimate(x, window=7, use_matrix=False)
+        y = loess.estimate(x, window=7, use_matrix=False, degree=1)
         print(x, y)
 
 
