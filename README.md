@@ -32,8 +32,7 @@ The included `TorchLoess.py` file is experimental. If you can find a better
 and faster implementation using PyTorch, please let me know.
 
 ### References
+[LOESS](https://medium.com/@joao.figueira/loess-373d43b03564)
 [NIST](https://www.itl.nist.gov/div898/handbook/pmd/section1/dep/dep144.htm)
-
 [LOESS](https://en.wikipedia.org/wiki/Local_regression)
-
 [Tricubic weight function](https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use)
