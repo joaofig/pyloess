@@ -66,9 +66,12 @@ class Loess(object):
 
         if use_matrix or degree > 1:
             wm = np.multiply(np.eye(window), weights)
-            xm = np.ones((window, 2))
-            xp = np.array([[1.0], [n_x]])
-            xm[:, 1] = self.n_xx[min_range]
+            xm = np.ones((window, degree + 1))
+
+            xp = np.array([[math.pow(n_x, p)] for p in range(degree + 1)])
+            for i in range(1, degree + 1):
+                xm[:, i] = np.power(self.n_xx[min_range], i)
+
             ym = self.n_yy[min_range]
             xmt_wm = np.transpose(xm) @ wm
             beta = np.linalg.pinv(xmt_wm @ xm) @ xmt_wm @ ym
