@@ -5,6 +5,7 @@ setup(
     version="v0.1.0",
     description="A simple implementation of the LOESS algorithm using numpy based on NIST",
     author="joaofig",
+    auther_email="joaofig@github.com",
     packages=find_packages(),
     python_requires=">=3.6",
 )
