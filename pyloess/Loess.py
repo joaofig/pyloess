@@ -2,8 +2,10 @@ import numpy as np
 import time
 import math
 
+from typing import Tuple
 
-def tricubic(x):
+
+def tricubic(x: np.ndarray) -> np.ndarray:
     y = np.zeros_like(x)
     idx = (x >= -1) & (x <= 1)
     y[idx] = np.power(1.0 - np.power(np.abs(x[idx]), 3), 3)
@@ -13,18 +15,22 @@ def tricubic(x):
 class Loess(object):
 
     @staticmethod
-    def normalize_array(array):
+    def normalize_array(array: np.ndarray) -> Tuple[np.ndarray, float, float]:
         min_val = np.min(array)
         max_val = np.max(array)
         return (array - min_val) / (max_val - min_val), min_val, max_val
 
-    def __init__(self, xx, yy, degree=1):
+    def __init__(self,
+                 xx: np.ndarray,
+                 yy: np.ndarray,
+                 degree: int = 1):
         self.n_xx, self.min_xx, self.max_xx = self.normalize_array(xx)
         self.n_yy, self.min_yy, self.max_yy = self.normalize_array(yy)
         self.degree = degree
 
     @staticmethod
-    def get_min_range(distances, window):
+    def get_min_range(distances: np.ndarray,
+                      window: int) -> np.ndarray:
         min_idx = np.argmin(distances)
         n = len(distances)
         if min_idx == 0:
@@ -47,18 +53,23 @@ class Loess(object):
         return np.array(min_range)
 
     @staticmethod
-    def get_weights(distances, min_range):
+    def get_weights(distances: np.ndarray,
+                    min_range: np.ndarray) -> np.ndarray:
         max_distance = np.max(distances[min_range])
         weights = tricubic(distances[min_range] / max_distance)
         return weights
 
-    def normalize_x(self, value):
+    def normalize_x(self, value: float) -> float:
         return (value - self.min_xx) / (self.max_xx - self.min_xx)
 
-    def denormalize_y(self, value):
+    def denormalize_y(self, value: float) -> float:
         return value * (self.max_yy - self.min_yy) + self.min_yy
 
-    def estimate(self, x, window, use_matrix=False, degree=1):
+    def estimate(self,
+                 x: float,
+                 window: int,
+                 use_matrix: bool = False,
+                 degree: int = 1) -> float:
         n_x = self.normalize_x(x)
         distances = np.abs(self.n_xx - n_x)
         min_range = self.get_min_range(distances, window)
@@ -110,7 +121,7 @@ def main():
     loess = Loess(xx, yy)
 
     for x in xx:
-        y = loess.estimate(x, window=7, use_matrix=False, degree=1)
+        y = loess.estimate(x, window=7, use_matrix=True, degree=1)
         print(x, y)
 
 
