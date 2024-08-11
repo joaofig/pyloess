@@ -5,6 +5,7 @@ UV = ./venv/bin/uv
 install:
 	pyenv install --skip-existing
 	pyenv exec python -m venv venv
+	$(BIN)pip install --upgrade pip
 	$(BIN)pip install uv
 	$(UV) pip sync requirements/run.txt
 

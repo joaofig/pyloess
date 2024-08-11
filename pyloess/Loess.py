@@ -24,9 +24,9 @@ class Loess(object):
                  xx: np.ndarray,
                  yy: np.ndarray,
                  degree: int = 1):
-        self.n_xx, self.min_xx, self.max_xx = self.normalize_array(xx)
-        self.n_yy, self.min_yy, self.max_yy = self.normalize_array(yy)
-        self.degree = degree
+            self.n_xx, self.min_xx, self.max_xx = self.normalize_array(xx)
+            self.n_yy, self.min_yy, self.max_yy = self.normalize_array(yy)
+            self.degree = degree
 
     @staticmethod
     def get_min_range(distances: np.ndarray,
@@ -122,7 +122,7 @@ def main():
 
     for x in xx:
         y = loess.estimate(x, window=7, use_matrix=True, degree=1)
-        print(x, y)
+        # print(x, y)
 
 
 if __name__ == "__main__":
@@ -130,5 +130,5 @@ if __name__ == "__main__":
 
     main()
 
-    end = time. time()
+    end = time.time()
     print(end - start)
